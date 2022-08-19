@@ -33,7 +33,7 @@ parse.add_argument("-t", "--tree",type=str, help="Input species tree",required=T
 parse.add_argument("-s", "--species",type=str, help="Name of species of interest",required=False)
 parse.add_argument("-r", "--root",nargs="+", help="Where to root unrooted species tree",required=False)
 parse.add_argument("-o", "--output",type=str, help="Name of output dir",default="output")
-parse.add_argument("-t", "--threads",type=str, help="Number of threads to run in parallel",required=False)
+parse.add_argument("-d", "--threads",type=str, help="Number of threads to run in parallel",required=False)
 
 args = parse.parse_args()
 
