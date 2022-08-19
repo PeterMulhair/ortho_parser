@@ -4,7 +4,7 @@ Scripts to parse OrthoFinder output
 ## Usage
 
 ```
-usage: ortho_parser.py [-h] -i INPUT -t TREE [-s SPECIES] [-r ROOT [ROOT ...]]
+usage: python ortho_parser.py [-h] -i INPUT -t TREE [-s SPECIES] [-r ROOT [ROOT ...]]
                        [-o OUTPUT] [-d THREADS]
 
 required arguments:
