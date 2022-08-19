@@ -7,13 +7,15 @@ Scripts to parse OrthoFinder output
 usage: ortho_parser.py [-h] -i INPUT -t TREE [-s SPECIES] [-r ROOT [ROOT ...]]
                        [-o OUTPUT] [-d THREADS]
 
-optional arguments:
-  -h, --help            show this help message and exit
+required arguments:
   -i INPUT, --input INPUT
                         Orthofinder output directory
   -t TREE, --tree TREE  Input species tree
+
+optional arguments:
+  -h, --help            show this help message and exit
   -s SPECIES, --species SPECIES
-                        Name of species of interest
+                        Name of species of interest to infer gene stats on
   -r ROOT [ROOT ...], --root ROOT [ROOT ...]
                         Where to root unrooted species tree
   -o OUTPUT, --output OUTPUT
