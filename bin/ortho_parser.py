@@ -18,7 +18,7 @@ from subprocess import Popen, PIPE, check_output
 
 # Author: Peter Mulhair
 # Date: 17/08/2022
-# Usage: python3 ortho_parser.py -i <OrthoFinder output directory> -t <species tree> optional: -s <species of interest> -r <where to root unrooted input tree> -o <name of output dir>
+# Usage: python3
 
 '''
 Script to parse OrthoFinder output, annotate 
@@ -33,8 +33,11 @@ parse.add_argument("-t", "--tree",type=str, help="Input species tree",required=T
 parse.add_argument("-s", "--species",type=str, help="Name of species of interest",required=False)
 parse.add_argument("-r", "--root",nargs="+", help="Where to root unrooted species tree",required=False)
 parse.add_argument("-o", "--output",type=str, help="Name of output dir",default="output")
+parse.add_argument("-t", "--threads",type=str, help="Number of threads to run in parallel",required=False)
 
 args = parse.parse_args()
+
+threads = int(args.threads)
 
 os.makedirs(args.output, exist_ok=True)
 if args.output[-1] != '/':
@@ -80,6 +83,43 @@ for node in input_tree.traverse("postorder"):
 
 input_tree.write(format = 1, outfile = args.output + "species_tree_label.nwk")
 
+def tree_rates(SCO):
+    '''
+    Function to find fast evolving
+    genes in a specified lineage
+    '''
+    OG_name = SCO.split('/')[-1].split('.')[0]
+    SCO_tree = glob.glob(args.input + 'Gene_Trees/' + OG_name + '_tree.txt')
+    SCO_tree = SCO_tree[0]
+    SCO_tree_rate = check_output('phykit evolutionary_rate ' + SCO_tree, shell=True)
+    
+    SCO_tree_rate = SCO_tree_rate.decode("utf-8")
+    SCO_tree_rate = SCO_tree_rate.strip()
+    SCO_rates_dist.append(SCO_tree_rate)
+    
+    tip_rates = check_output('phykit terminal_branch_stats -v ' + SCO_tree, shell=True)
+    tip_rates = tip_rates.decode("utf-8").split('\n')
+    tip_rates = tip_rates[:-1]
+    tip_names = check_output('phykit tip_labels ' + SCO_tree, shell=True)
+    tip_names = tip_names.decode("utf-8")
+    
+    sp_order = []
+    for gene_name in tip_names.split('\n'):
+        sp_gene_name = gene_name.split('_')[0]
+        sp_order.append(sp_gene_name)
+    sp_order = sp_order[:-1]
+    
+    species_index = sp_order.index(args.species)
+    species_tip_length = tip_rates[species_index]
+    fast_tip_count = 0
+    for sp_rate in tip_rates:
+        if sp_rate > SCO_tree_rate:
+            fast_tip_count+=1
+    
+    if (species_tip_length > SCO_tree_rate) and (fast_tip_count <= 4):
+        unix('cp ' + SCO_tree + ' ' + args.output + args.species + '_gene_stats/fast_evolving_genes/', shell=True)
+            
+
 ##Get info of given species if the flag is given
 def sp_stats(species):
     os.makedirs(args.output + args.species + '_gene_stats/', exist_ok=True)
@@ -89,39 +129,15 @@ def sp_stats(species):
     os.makedirs(args.output + args.species + '_gene_stats/lost_genes/', exist_ok=True)
     
     #Measure rates of species in single copy gene trees
-    SCO_high_rates = []
-    SCO_rates_dist = []
+    SCO_list = []
     for SCO in glob.glob(args.input + 'Single_Copy_Orthologue_Sequences/*fa'):
-        OG_name = SCO.split('/')[-1].split('.')[0]
-        SCO_tree = glob.glob(args.input + 'Gene_Trees/' + OG_name + '_tree.txt')
-        SCO_tree = SCO_tree[0]
-        SCO_tree_rate = check_output('phykit evolutionary_rate ' + SCO_tree, shell=True)
+        SCO_list.append(SCO)
 
-        SCO_tree_rate = SCO_tree_rate.decode("utf-8")
-        SCO_tree_rate = SCO_tree_rate.strip()
-        SCO_rates_dist.append(SCO_tree_rate)
-
-        tip_rates = check_output('phykit terminal_branch_stats -v ' + SCO_tree, shell=True)
-        tip_rates = tip_rates.decode("utf-8").split('\n')
-        tip_rates = tip_rates[:-1]
-        tip_names = check_output('phykit tip_labels ' + SCO_tree, shell=True)
-        tip_names = tip_names.decode("utf-8")
-
-        sp_order = []
-        for gene_name in tip_names.split('\n'):
-            sp_gene_name = gene_name.split('_')[0]
-            sp_order.append(sp_gene_name)
-        sp_order = sp_order[:-1]
-
-        species_index = sp_order.index(args.species)
-        species_tip_length = tip_rates[species_index]
-
-        if species_tip_length > SCO_tree_rate:
-            SCO_high_rates.append(SCO_tree)
-            unix('cp ' + SCO_tree + ' ' + args.output + args.species + '_gene_stats/fast_evolving_genes/', shell=True)
-
-    print(len(SCO_high_rates), 'genes annotated as fast evolving in species of interest', args.species)
-
+    if args.threads:
+        Parallel(n_jobs=threads)(delayed(tree_rates)(SCO_tree) for SCO_tree in SCO_list)
+    else:
+        Parallel(n_jobs=1)(delayed(tree_rates)(SCO_tree) for SCO_tree in SCO_list)
+        
     #Output OGs that are specific to species / duplicated just in species / or lost just in species
     taxa_count = len(sp_name_num)
     sp_multi_copy_genes = []
@@ -212,7 +228,6 @@ for node, gene_list in OG_origins.items():
         gain_count = len(gene_list)
         node_counts[node] = gain_count
 
-
 ##Get gene numbers per species
 sp_gene_counts = {}
 with open(args.input + "Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv") as f:
@@ -230,7 +245,7 @@ with open(args.input + "Comparative_Genomics_Statistics/Statistics_PerSpecies.ts
         count+=1
     
     
-##Plot tree with gains per node and gene numbers per species
+##Plot tree with gains
 tre = toytree.tree(args.output + "species_tree_label.nwk")
 for node in tre.treenode.traverse():
     node_name = node.name
@@ -242,11 +257,12 @@ for node in tre.treenode.traverse():
 
 sizes = tre.get_node_values("genegains", True, True)
 with np.errstate(divide='ignore'):
-    log_sizes = np.log10(sizes)#Use log transformed numbers to size gain nodes on tree
+    log_sizes = np.log10(sizes)
 log_10 = []
 for logs in log_sizes:
     log10 = logs*10
     log_10.append(log10)
+
 
 modnames = [sp_name_num[tip] for tip in tre.get_tip_labels()]
 gene_counts = [sp_gene_counts[tip] for tip in tre.get_tip_labels()]
