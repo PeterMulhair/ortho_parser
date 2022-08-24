@@ -93,7 +93,8 @@ def tree_rates(SCO):
     SCO_tree = glob.glob(args.input + 'Gene_Trees/' + OG_name + '_tree.txt')
     SCO_tree = SCO_tree[0]
     SCO_tree_rate = check_output('phykit evolutionary_rate ' + SCO_tree, shell=True)
-    
+
+    SCO_rates_dist = []
     SCO_tree_rate = SCO_tree_rate.decode("utf-8")
     SCO_tree_rate = SCO_tree_rate.strip()
     SCO_rates_dist.append(SCO_tree_rate)
