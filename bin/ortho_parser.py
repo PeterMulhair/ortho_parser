@@ -37,7 +37,8 @@ parse.add_argument("-d", "--threads",type=str, help="Number of threads to run in
 
 args = parse.parse_args()
 
-threads = int(args.threads)
+if args.threads:
+    threads = int(args.threads)
 
 os.makedirs(args.output, exist_ok=True)
 if args.output[-1] != '/':
