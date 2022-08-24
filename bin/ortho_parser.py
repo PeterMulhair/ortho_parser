@@ -274,7 +274,7 @@ if Ntips < 30:
     ax0 = canvas.cartesian(bounds=(50, 600, 10, 700), padding=15, ymin=0, ymax=Ntips)
     ax1 = canvas.cartesian(bounds=(620, 750, 10, 700), padding=15, ymin=0, ymax=Ntips)
     tre.draw(axes=ax0, tip_labels=(modnames), node_labels=("genegains", 1, 1), node_sizes=log_10, node_colors="#99d8c9", node_style={"stroke": "black"}, tip_labels_align=True, scalebar=True, tip_labels_style={"font-size":"15px"})
-    ax1.bars(np.arange(Ntips), gene_counts, along='y', color = "#bdbdbd")
+    ax1.bars(np.arange(Ntips), gene_counts, along='y', color = "#bdbdbd", style={"stroke": "white", "stroke-width": 5})
     ax1.show = True
     ax1.y.show = False
     ax1.x.ticks.show = True
