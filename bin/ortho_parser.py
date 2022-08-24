@@ -279,9 +279,19 @@ if Ntips < 30:
     ax1.y.show = False
     ax1.x.ticks.show = True
 else:
-    canvas, axes, mark = tre.draw(width=1000, height=1200, tip_labels=(modnames), node_labels=("genegains", 1, 1), node_sizes=log_10, node_colors="#99d8c9", node_style={"stroke": "black"}, tip_labels_align=True, scalebar=True)
-toyplot.pdf.render(canvas, args.output + "gene_gains_sp_tree.pdf")
+    #canvas, axes, mark = tre.draw(width=1000, height=1200, tip_labels=(modnames), node_labels=("genegains", 1, 1), node_sizes=log_10, node_colors="#99d8c9", node_style={"stroke": "black"}, tip_labels_align=True, scalebar=True)
+    canvas = toyplot.Canvas(width=1000, height=1200)
+    ax0 = canvas.cartesian(bounds=(50, 800, 10, 1150), padding=15, ymin=0, ymax=Ntips)
+    ax1 = canvas.cartesian(bounds=(820, 950, 10, 1150), padding=15, ymin=0, ymax=Ntips)
+    tre.draw(axes=ax0, tip_labels=(modnames), node_labels=("genegains", 1, 1), node_sizes=log_10, node_colors="#99d8c9", node_style={"stroke": "black"}, tip_labels_align=True, scalebar=True, tip_labels_style={"font-size":"15px"})
+    ax1.bars(np.arange(Ntips), gene_counts, along='y', color = "#bdbdbd")
+    ax1.show = True
+    ax1.y.show = False
+    ax1.x.ticks.show = True
 
+
+toyplot.pdf.render(canvas, args.output + "gene_gains_sp_tree.pdf")
+toyplot.svg.render(canvas, args.output + "gene_gains_sp_tree.svg")
 
 if args.species:
     print('\nParsing stats for', args.species)
