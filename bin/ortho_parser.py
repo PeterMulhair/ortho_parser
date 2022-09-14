@@ -248,7 +248,7 @@ with open(args.input + "Comparative_Genomics_Statistics/Statistics_PerSpecies.ts
     
     
 ##Plot tree with gains
-tre = toytree.tree(args.output + "species_tree_label.nwk")
+tre = toytree.tree(args.output + "species_tree_label.nwk", tree_format=1)
 for node in tre.treenode.traverse():
     node_name = node.name
     if node_name in node_counts.keys():
