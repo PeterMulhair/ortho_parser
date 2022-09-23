@@ -34,6 +34,7 @@ parse.add_argument("-s", "--species",type=str, help="Name of species of interest
 parse.add_argument("-r", "--root",nargs="+", help="Where to root unrooted species tree",required=False)
 parse.add_argument("-o", "--output",type=str, help="Name of output dir",default="output")
 parse.add_argument("-d", "--threads",type=str, help="Number of threads to run in parallel",required=False)
+parse.add_argument("-c", "--clade",nargs="+", help="Clade(s) interest to pull out OGs gained",required=False)
 
 args = parse.parse_args()
 
@@ -221,8 +222,25 @@ with open(args.input + 'Orthogroups/Orthogroups.GeneCount.tsv') as f:
             OG_origins[sp_node].append(OGs)
 
 
-#print(OG_origins['309'])
-
+if args.clade:
+    if len(args.clade) == 1:
+        args.clade = args.clade[0]
+        os.makedirs(args.output + 'clade_gain_OGs/' + str(args.clade),exist_ok=True)
+        OG_node_origin = OG_origins[args.clade]
+        for OG_ID in OG_node_origin:
+            OG_fasta = glob.glob(args.input + 'Orthogroup_Sequences/' + OG_ID + '.fa')
+            OG_fasta = OG_fasta[0]
+            unix('scp ' + OG_fasta + ' ' + args.output + 'clade_gain_OGs/' + str(args.clade), shell=True)
+    else:
+        for clades in args.clade:
+            os.makedirs(args.output + 'clade_gain_OGs/' + str(clades),exist_ok=True)
+            OG_node_origin = OG_origins[clades]
+            for OG_ID in OG_node_origin:
+                OG_fasta = glob.glob(args.input +'Orthogroup_Sequences/' + OG_ID + '.fa')
+                OG_fasta = OG_fasta[0]
+                unix('scp ' + OG_fasta + ' ' + args.output + 'clade_gain_OGs/' + str(clades), shell=True)
+            
+            
 node_counts = {}
 for node, gene_list in OG_origins.items():
     try:
@@ -254,6 +272,8 @@ with open(args.input + "Comparative_Genomics_Statistics/Statistics_PerSpecies.ts
 tre = toytree.tree(args.output + "species_tree_label.nwk", tree_format=1)
 for node in tre.treenode.traverse():
     node_name = node.name
+    #print(node_name)
+    #print(node)
     if node not in tre.get_tip_labels():
         if node_name in node_counts.keys():
             values = node_counts[node_name]
@@ -262,7 +282,7 @@ for node in tre.treenode.traverse():
             node.add_feature("genegains", 0)
         
 sizes = tre.get_node_values("genegains", True, True)
-
+#print(sizes)
 with np.errstate(divide='ignore'):
     log_sizes = np.log10(sizes)
 log_10 = []
@@ -284,6 +304,7 @@ if Ntips < 30:
     ax1.y.show = False
     ax1.x.ticks.show = True
 else:
+    #canvas, axes, mark = tre.draw(width=1000, height=1200, tip_labels=(modnames), node_labels=("genegains", 1, 1), node_sizes=log_10, node_colors="#99d8c9", node_style={"stroke": "black"}, tip_labels_align=True, scalebar=True)
     canvas = toyplot.Canvas(width=1500, height=1800)
     ax0 = canvas.cartesian(bounds=(50, 1200, 10, 1750), padding=15, ymin=0, ymax=Ntips)
     ax1 = canvas.cartesian(bounds=(1220, 1450, 10, 1750), padding=15, ymin=0, ymax=Ntips)
@@ -297,6 +318,13 @@ else:
 toyplot.pdf.render(canvas, args.output + "gene_gains_sp_tree.pdf")
 toyplot.svg.render(canvas, args.output + "gene_gains_sp_tree.svg")
 
+#Write tree with species names and node numbers to file
+for node in input_tree.traverse("postorder"):
+    if node.is_leaf():
+        node.name = sp_name_num[node.name]
+        
+input_tree.write(format = 1, outfile = args.output + "species_tree_label.nwk")
+        
 if args.species:
     print('\nParsing stats for', args.species)
     print('This may take some time...\n')
