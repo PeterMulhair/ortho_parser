@@ -220,6 +220,9 @@ with open(args.input + 'Orthogroups/Orthogroups.GeneCount.tsv') as f:
             sp_node = sp_lists[0]
             OG_origins[sp_node].append(OGs)
 
+
+#print(OG_origins['309'])
+
 node_counts = {}
 for node, gene_list in OG_origins.items():
     try:
@@ -246,18 +249,20 @@ with open(args.input + "Comparative_Genomics_Statistics/Statistics_PerSpecies.ts
         sp_gene_counts[node_num_sp] = gene_count
         count+=1
     
-    
+
 ##Plot tree with gains
 tre = toytree.tree(args.output + "species_tree_label.nwk", tree_format=1)
 for node in tre.treenode.traverse():
     node_name = node.name
-    if node_name in node_counts.keys():
-        values = node_counts[node_name]
-        node.add_feature("genegains", values)
-    else:
-        node.add_feature("genegains", 0)
-
+    if node not in tre.get_tip_labels():
+        if node_name in node_counts.keys():
+            values = node_counts[node_name]
+            node.add_feature("genegains", values)
+        else:
+            node.add_feature("genegains", 0)
+        
 sizes = tre.get_node_values("genegains", True, True)
+
 with np.errstate(divide='ignore'):
     log_sizes = np.log10(sizes)
 log_10 = []
@@ -279,10 +284,9 @@ if Ntips < 30:
     ax1.y.show = False
     ax1.x.ticks.show = True
 else:
-    #canvas, axes, mark = tre.draw(width=1000, height=1200, tip_labels=(modnames), node_labels=("genegains", 1, 1), node_sizes=log_10, node_colors="#99d8c9", node_style={"stroke": "black"}, tip_labels_align=True, scalebar=True)
-    canvas = toyplot.Canvas(width=1000, height=1200)
-    ax0 = canvas.cartesian(bounds=(50, 800, 10, 1150), padding=15, ymin=0, ymax=Ntips)
-    ax1 = canvas.cartesian(bounds=(820, 950, 10, 1150), padding=15, ymin=0, ymax=Ntips)
+    canvas = toyplot.Canvas(width=1500, height=1800)
+    ax0 = canvas.cartesian(bounds=(50, 1200, 10, 1750), padding=15, ymin=0, ymax=Ntips)
+    ax1 = canvas.cartesian(bounds=(1220, 1450, 10, 1750), padding=15, ymin=0, ymax=Ntips)
     tre.draw(axes=ax0, tip_labels=(modnames), node_labels=("genegains", 1, 1), node_sizes=log_10, node_colors="#99d8c9", node_style={"stroke": "black"}, tip_labels_align=True, scalebar=True, tip_labels_style={"font-size":"15px"})
     ax1.bars(np.arange(Ntips), gene_counts, along='y', color = "#bdbdbd")
     ax1.show = True
