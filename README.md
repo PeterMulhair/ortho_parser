@@ -3,6 +3,8 @@ Scripts to parse OrthoFinder output
 
 ## Usage
 
+The `ortho_parser.py` script runs a very simple parsimony gene reconstruction method to plot gene gains on a species tree. 
+
 ```
 usage: python ortho_parser.py [-h] -i INPUT -t TREE [-s SPECIES] [-r ROOT [ROOT ...]]
                        [-o OUTPUT] [-d THREADS]
@@ -17,9 +19,11 @@ optional arguments:
   -s SPECIES, --species SPECIES
                         Name of species of interest to infer gene stats on
   -r ROOT [ROOT ...], --root ROOT [ROOT ...]
-                        Where to root unrooted species tree
+                        Where to root unrooted species tree (eg. DroMela or DroMela,EriTena)
   -o OUTPUT, --output OUTPUT
                         Name of output dir
   -d THREADS, --threads THREADS
                         Number of threads to run in parallel
+  -c CLADE [CLADE ...], --clade CLADE [CLADE ...]
+                        Clade(s) interest to pull out OGs gained (eg. 100 or 100,153,12)
 ```
