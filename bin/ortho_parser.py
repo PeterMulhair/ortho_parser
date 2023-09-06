@@ -254,9 +254,10 @@ for node, gene_list in OG_origins.items():
 ##Get gene numbers per species
 sp_gene_counts = {}
 with open(args.input + "Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv") as f:
-    head = [next(f) for x in range(2)]
+    #head = [next(f) for x in range(2)]#Number of genes per species
+    head = [next(f) for x in range(7)]#Number of orthogroups per species
     sp_list = head[0].split('\t')[1:]
-    gene_nums = head[1].split('\t')[1:]
+    gene_nums = head[-1].split('\t')[1:]
     count = 0
     for sp in sp_list:
         sp = sp.strip()
